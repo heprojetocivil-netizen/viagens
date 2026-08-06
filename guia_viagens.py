@@ -303,32 +303,39 @@ elif st.session_state.etapa == "App":
 
     barra_salvar()
 
-    # NAVBAR
-    cols = st.columns(8)
-    paginas_nav = [
-        ("🏠", "Home"),
-        ("🗺️", "Roteiro"),
-        ("🇧🇷", "Brasil"),
-        ("💰", "Orcamento"),
-        ("🗣️", "Frases"),
-        ("🧳", "Checklist"),
-        ("👥", "Grupo"),
-        ("❤️", "Salvos"),
+    # NAVBAR — linha 1
+    cols1 = st.columns(8)
+    paginas_nav1 = [
+        ("🏠","Home"),("🗺️","Roteiro"),("🇧🇷","Brasil"),("💰","Orcamento"),
+        ("🗣️","Frases"),("🧳","Checklist"),("👥","Grupo"),("❤️","Salvos"),
     ]
-    nomes_nav = {
-        "Home":      "Painel Principal",
-        "Roteiro":   "Roteiro Completo",
-        "Brasil":    "Fim de Semana no Brasil",
-        "Orcamento": "Estimativa de Custos",
-        "Frases":    "Frases Essenciais no Idioma",
-        "Checklist": "Checklist de Viagem",
-        "Grupo":     "Viagem em Grupo",
-        "Salvos":    "Viagens Salvas",
+    nomes_nav1 = {
+        "Home":"Painel Principal","Roteiro":"Roteiro Completo","Brasil":"Fim de Semana no Brasil",
+        "Orcamento":"Estimativa de Custos","Frases":"Frases Essenciais","Checklist":"Checklist de Viagem",
+        "Grupo":"Viagem em Grupo","Salvos":"Viagens Salvas",
     }
-    for i, (icone, pagina) in enumerate(paginas_nav):
-        if cols[i].button(icone, key=f"nav_{pagina}", help=nomes_nav[pagina]):
-            st.session_state.pagina = pagina
-            st.rerun()
+    for i,(icone,pagina) in enumerate(paginas_nav1):
+        if cols1[i].button(icone, key=f"nav1_{pagina}", help=nomes_nav1[pagina]):
+            st.session_state.pagina = pagina; st.rerun()
+
+    # NAVBAR — linha 2 (novos módulos)
+    cols2 = st.columns(10)
+    paginas_nav2 = [
+        ("🌍","Destino"),("🗺","Mapa"),("💱","Moeda"),("🌤️","Clima"),
+        ("🛡️","Seguranca"),("🏛️","Historia"),("📄","PDF"),("💸","Economizar"),
+        ("🚫","Armadilha"),("🤝","Pessoas"),
+    ]
+    nomes_nav2 = {
+        "Destino":"Guia Completo do Destino","Mapa":"Mapa dos Passeios",
+        "Moeda":"Moeda e Câmbio","Clima":"Clima no Período",
+        "Seguranca":"Segurança e Saúde","Historia":"Conheça o Destino",
+        "PDF":"Gerar PDF da Viagem","Economizar":"Economizar Mais",
+        "Armadilha":"Palavras Armadilha — Evite Micos",
+        "Pessoas":"Como São as Pessoas — Guia de Relacionamento",
+    }
+    for i,(icone,pagina) in enumerate(paginas_nav2):
+        if cols2[i].button(icone, key=f"nav2_{pagina}", help=nomes_nav2[pagina]):
+            st.session_state.pagina = pagina; st.rerun()
 
     st.markdown("<hr class='divider'>", unsafe_allow_html=True)
 
@@ -464,50 +471,79 @@ elif st.session_state.etapa == "App":
         if st.button("🗺️ GERAR ROTEIRO COMPLETO"):
             if destino.strip():
                 with st.spinner(f"Montando seu roteiro para {destino}..."):
+                    # Detecta se é destino internacional com euro
+                    paises_euro = ["portugal","lisboa","porto","espanha","madrid","barcelona","frança","paris","itália","roma","milão","alemanha","berlim","grécia","atenas","holanda","amsterdam","bélgica","bruxelas","áustria","viena","irlanda","dublin"]
+                    usa_euro = any(p in destino.lower() for p in paises_euro)
+                    moeda_info = "O destino usa Euro (€). Mostre os preços em € e também a conversão estimada em R$ (considere câmbio de aproximadamente R$6 por €1). " if usa_euro else ""
+
                     prompt = (
                         f"Crie um roteiro completo de {dias} dias para {destino}.\n"
                         f"Saindo de: {origem or 'Brasil'}. Orçamento: R${orcamento}. "
-                        f"Estilo: {perfil}. Pessoas: {pessoas}. Época: {epoca or 'qualquer'}.\n\n"
+                        f"Estilo: {perfil}. Pessoas: {pessoas}. Época: {epoca or 'qualquer'}.\n"
+                        f"{moeda_info}\n\n"
+                        f"INSTRUÇÕES IMPORTANTES:\n"
+                        f"- Todos os preços são ESTIMATIVAS e podem variar — informe isso sempre\n"
+                        f"- Inclua links para sites oficiais ou de compra de ingressos sempre que possível\n"
+                        f"- Sugira restaurantes com nota média (ex: ⭐4.5) e faixa de preço (€/R$ por pessoa)\n"
+                        f"- Informe o tempo de deslocamento entre pontos turísticos (ex: 15 min a pé, 20 min de metrô)\n"
+                        f"- Ao final, calcule o orçamento total e avise se R${orcamento} é suficiente ou não\n"
+                        f"- Inclua sugestão de restaurante por dia com nome real, prato recomendado e preço\n\n"
                         f"ESTRUTURA:\n\n"
                         f"✈️ ROTEIRO: {destino.upper()} — {dias} DIAS\n"
-                        f"Estilo: {perfil} | {pessoas} | R${orcamento} total\n\n"
+                        f"Estilo: {perfil} | {pessoas} | Orçamento: R${orcamento} total\n\n"
                         f"📋 INFORMAÇÕES ESSENCIAIS:\n"
                         f"• Melhor época para ir\n"
                         f"• Como chegar (passagem estimada de {origem or 'Brasil'})\n"
                         f"• Documentos necessários\n"
-                        f"• Moeda e câmbio atual estimado\n"
+                        f"• Moeda e câmbio estimado\n"
                         f"• Fuso horário\n\n"
                         f"Para CADA dia use este formato:\n\n"
                         f"━━━━━━━━━━━━━━━━━━━━━\n"
                         f"📅 DIA [N] — [TEMA DO DIA]\n"
                         f"━━━━━━━━━━━━━━━━━━━━━\n"
                         f"☕ Manhã ([horário]):\n"
-                        f"• [atividade/local] — [dica exclusiva] — aprox. R$[X]\n\n"
+                        f"• [Local] — [dica exclusiva] — aprox. [preço] (⚠️ estimativa, pode variar)\n"
+                        f"  🔗 Site/ingresso: [link oficial se existir]\n"
+                        f"  🚶 Deslocamento até próximo ponto: [X min a pé / metrô / táxi]\n\n"
                         f"🍽️ Almoço ([horário]):\n"
-                        f"• [restaurante específico] — [prato recomendado] — R$[X] p/pessoa\n\n"
+                        f"• [Nome do restaurante] ⭐[nota] — [prato recomendado] — [faixa de preço] p/pessoa\n\n"
                         f"🌅 Tarde ([horário]):\n"
-                        f"• [atividade/local] — [dica exclusiva] — R$[X]\n\n"
+                        f"• [Local] — [dica] — [preço] (⚠️ estimativa)\n"
+                        f"  🔗 [link se existir]\n"
+                        f"  🚶 Deslocamento: [X min]\n\n"
                         f"🌙 Noite ([horário]):\n"
-                        f"• [jantar + programa noturno] — R$[X]\n\n"
-                        f"💰 Gasto estimado do dia: R$[X] p/pessoa\n\n"
+                        f"• [Jantar: restaurante ⭐nota] — [preço]\n"
+                        f"• [Programa noturno opcional]\n\n"
+                        f"💰 Gasto estimado do dia: [preço] p/pessoa (⚠️ estimativa)\n\n"
                         f"[Repita para todos os {dias} dias]\n\n"
+                        f"🗺️ ORDEM SUGERIDA DOS PASSEIOS (para reduzir deslocamentos):\n"
+                        f"[Liste os pontos turísticos em ordem geográfica para minimizar trajetos, com bairro de cada um]\n\n"
+                        f"🍽️ TOP RESTAURANTES DO ROTEIRO:\n"
+                        f"[Lista dos melhores mencionados com: nome, culinária, nota, faixa de preço, bairro]\n\n"
                         f"🏨 HOSPEDAGEM SUGERIDA:\n"
-                        f"[3 opções por perfil: econômico, intermediário e confortável — com bairro e preço/noite]\n\n"
+                        f"[3 opções: econômico, intermediário, confortável — com bairro e preço/noite]\n\n"
                         f"🚗 COMO SE LOCOMOVER:\n"
-                        f"[Transporte local — app, metrô, carro, táxi — com custos]\n\n"
-                        f"📊 RESUMO FINANCEIRO:\n"
-                        f"Passagem: R$[X]\n"
-                        f"Hospedagem {dias} noites: R$[X]\n"
-                        f"Alimentação: R$[X]\n"
-                        f"Passeios: R$[X]\n"
-                        f"Transporte local: R$[X]\n"
-                        f"Total estimado: R$[X] p/pessoa\n\n"
+                        f"[Transporte local — app, metrô, carro, táxi — com custos e dicas]\n\n"
+                        f"📊 RESUMO FINANCEIRO COMPLETO:\n"
+                        f"Passagem: [preço]\n"
+                        f"Hospedagem {dias} noites: [preço]\n"
+                        f"Alimentação: [preço]\n"
+                        f"Passeios e ingressos: [preço]\n"
+                        f"Transporte local: [preço]\n"
+                        f"Total estimado: [preço] p/pessoa\n\n"
+                        f"⚠️ ANÁLISE DO ORÇAMENTO:\n"
+                        f"[Calcule se R${orcamento} é suficiente para {pessoas}. Se não for, indique quanto falta e onde cortar]\n\n"
                         f"💡 DICAS DE OURO:\n"
                         f"[5 dicas que só quem conhece {destino} de verdade sabe]"
                     )
                     res = viagem_ia(prompt)
                     salvar_roteiro("Roteiro Completo", destino, res)
                     st.session_state['roteiro_temp'] = res
+                    st.session_state['roteiro_destino'] = destino
+                    st.session_state['roteiro_dias'] = dias
+                    st.session_state['roteiro_orcamento'] = orcamento
+                    st.session_state['roteiro_pessoas'] = pessoas
+                    st.session_state['roteiro_epoca'] = epoca
                     st.markdown(f"<div class='card'>{res}</div>", unsafe_allow_html=True)
             else:
                 st.warning("Informe o destino da viagem.")
@@ -728,19 +764,21 @@ elif st.session_state.etapa == "App":
                         f"Crie um guia de frases essenciais para {pais_f}.\n"
                         f"Situações: {contexts}. Nível: {nivel_f}.\n"
                         f"{'Inclua pronúncia fonética entre colchetes.' if fonetica else ''}\n\n"
-                        f"FORMATO para cada situação:\n\n"
-                        f"[EMOJI] [SITUAÇÃO]\n\n"
+                        f"FORMATO OBRIGATÓRIO para cada situação:\n\n"
+                        f"[EMOJI] [NOME DA SITUAÇÃO]\n"
+                        f"(linha em branco)\n"
                         f"| Português | {pais_f} | {'Pronúncia' if fonetica else ''} |\n"
                         f"|-----------|---------|{'---------' if fonetica else ''}|\n"
-                        f"| [frase PT] | [frase no idioma] | {'[como pronunciar]' if fonetica else ''} |\n\n"
-                        f"[Mínimo 6 frases por situação]\n\n"
-                        f"[Repita para todas as situações solicitadas]\n\n"
+                        f"| frase | tradução | {'[pronúncia]' if fonetica else ''} |\n"
+                        f"(linha em branco entre cada seção)\n\n"
+                        f"IMPORTANTE: deixe uma linha em branco entre o título de cada situação e a tabela, e entre cada situação. As seções devem ser bem separadas visualmente.\n\n"
+                        f"Mínimo 6 frases por situação. Repita para todas as situações: {contexts}\n\n"
                         f"🆘 FRASES DE EMERGÊNCIA (memorize antes de viajar):\n"
-                        f"[As 10 frases mais importantes em qualquer situação de risco]\n\n"
+                        f"[As 10 frases mais importantes — mesma tabela com linha em branco antes]\n\n"
                         f"📱 APPS DE TRADUÇÃO RECOMENDADOS:\n"
                         f"[Os melhores apps para {pais_f} — com ou sem internet]\n\n"
                         f"💡 DICA CULTURAL:\n"
-                        f"[Como os locais reagem quando estrangeiros tentam falar o idioma deles]"
+                        f"[Como os locais reagem quando estrangeiros tentam falar o idioma]"
                     )
                     res = viagem_ia(prompt)
                     salvar_roteiro("Frases Essenciais", pais_f, res)
@@ -1001,6 +1039,637 @@ elif st.session_state.etapa == "App":
             if st.button("🗑️ Limpar Todo o Histórico"):
                 st.session_state.historico_roteiros = []
                 st.rerun()
+
+    # ========================
+    # GUIA COMPLETO DO DESTINO
+    # ========================
+    elif st.session_state.pagina == "Destino":
+        st.header("🌍 Guia Completo do Destino")
+        st.markdown("Tudo que você precisa saber antes de embarcar — em um só lugar.")
+
+        destino_d = st.text_input("✈️ Destino:", placeholder="ex: Lisboa, Tóquio, Nova York, Marrocos...")
+        epoca_d = st.text_input("📅 Período da viagem:", placeholder="ex: janeiro, julho, verão europeu...")
+
+        if st.button("🌍 GERAR GUIA COMPLETO"):
+            if destino_d.strip():
+                with st.spinner(f"Reunindo tudo sobre {destino_d}..."):
+                    prompt = (
+                        f"Crie um guia completo e prático sobre {destino_d} para um viajante brasileiro.\n"
+                        f"Período: {epoca_d or 'geral'}.\n\n"
+                        f"FORMATO:\n\n"
+                        f"🌍 GUIA COMPLETO — {destino_d.upper()}\n\n"
+                        f"🌤️ CLIMA NO PERÍODO:\n"
+                        f"• Temperatura média (máxima e mínima)\n"
+                        f"• Chance de chuva e precipitação\n"
+                        f"• Roupas recomendadas — liste peças específicas\n\n"
+                        f"🛡️ SEGURANÇA:\n"
+                        f"• Nível geral de segurança para turistas\n"
+                        f"• Regiões mais tranquilas (onde ficar)\n"
+                        f"• Áreas para evitar e por quê\n"
+                        f"• Cuidados comuns (golpes frequentes, cuidados com pertences)\n\n"
+                        f"💰 CUSTO DE VIDA:\n"
+                        f"• Classificação: barato / médio / caro para brasileiros\n"
+                        f"• Comparação com São Paulo\n"
+                        f"• Onde economizar vs onde vale gastar mais\n\n"
+                        f"🏛️ IDIOMA OFICIAL E FRASES ÚTEIS:\n"
+                        f"• Idioma(s) falado(s)\n"
+                        f"• 10 frases essenciais com pronúncia\n"
+                        f"• Nível de inglês da população local\n\n"
+                        f"💱 MOEDA, CÂMBIO E PAGAMENTO:\n"
+                        f"• Moeda oficial e câmbio estimado em R$\n"
+                        f"• Formas de pagamento aceitas\n"
+                        f"• Dicas de câmbio (onde trocar, o que evitar)\n"
+                        f"• Taxas de cartão no exterior\n\n"
+                        f"🚖 TRANSPORTE PÚBLICO:\n"
+                        f"• Meios disponíveis (metrô, ônibus, trem, ferry)\n"
+                        f"• Apps de transporte locais\n"
+                        f"• Custo médio por trajeto\n"
+                        f"• Dicas para não errar\n\n"
+                        f"⚡ TOMADAS E VOLTAGEM:\n"
+                        f"• Tipo de tomada (A, B, C, F, G...)\n"
+                        f"• Voltagem (110V/220V)\n"
+                        f"• Precisa de adaptador? Qual modelo?\n\n"
+                        f"📶 INTERNET, CHIP E ESIM:\n"
+                        f"• Operadoras locais recomendadas\n"
+                        f"• Preço médio de chip turista\n"
+                        f"• eSIM — vale a pena? Quais apps usar\n"
+                        f"• Qualidade da internet local\n\n"
+                        f"🏥 SAÚDE:\n"
+                        f"• Vacinas exigidas ou recomendadas para brasileiros\n"
+                        f"• Seguro viagem — é obrigatório? Qual contratar?\n"
+                        f"• Hospitais de referência para turistas\n"
+                        f"• Farmácias e medicamentos básicos a levar\n\n"
+                        f"📜 COSTUMES LOCAIS:\n"
+                        f"• Etiqueta e boas maneiras locais\n"
+                        f"• O que NUNCA fazer para não ofender\n"
+                        f"• Horários culturais (almoço, jantar, lojas)\n"
+                        f"• Gorjeta — como funciona\n\n"
+                        f"🍽️ PRATOS TÍPICOS:\n"
+                        f"• 5 pratos que valem a pena experimentar\n"
+                        f"• Onde encontrá-los (tipo de restaurante)\n"
+                        f"• Preço médio de cada prato\n\n"
+                        f"🎉 EVENTOS E FESTIVAIS NO PERÍODO:\n"
+                        f"• Festivais, feriados ou eventos durante {epoca_d or 'o ano'}\n"
+                        f"• Impacto nos preços e disponibilidade\n\n"
+                        f"📱 APLICATIVOS INDISPENSÁVEIS:\n"
+                        f"• Apps de transporte, mapas, tradução, reservas e pagamento específicos para {destino_d}\n"
+                        f"• Quais baixar antes de embarcar"
+                    )
+                    res = viagem_ia(prompt)
+                    salvar_roteiro("Guia do Destino", destino_d, res)
+                    st.session_state['destino_temp'] = res
+
+        if st.session_state.get('destino_temp'):
+            st.markdown(f"<div class='card'>{st.session_state['destino_temp']}</div>", unsafe_allow_html=True)
+            col_dl, col_sv = st.columns(2)
+            with col_dl:
+                st.download_button("📋 Baixar (.txt)", data=st.session_state['destino_temp'],
+                    file_name=f"guia_{destino_d.replace(' ','_') if 'destino_d' in dir() else 'destino'}.txt",
+                    mime="text/plain", use_container_width=True)
+            with col_sv:
+                if st.button("❤️ Salvar", key="sv_destino", use_container_width=True):
+                    st.session_state.viagens_salvas.append({'tipo':'Guia do Destino',
+                        'destino': destino_d if 'destino_d' in dir() else '',
+                        'conteudo': st.session_state['destino_temp'],
+                        'data': datetime.now().strftime('%d/%m %H:%M')})
+                    st.success("❤️ Salvo!")
+
+    # ========================
+    # MAPA DOS PASSEIOS
+    # ========================
+    elif st.session_state.pagina == "Mapa":
+        st.header("🗺 Mapa dos Passeios")
+        st.markdown("Ordem inteligente dos pontos turísticos para reduzir deslocamentos.")
+
+        destino_m = st.text_input("✈️ Destino:", placeholder="ex: Lisboa, Paris, Roma...")
+        pontos_m = st.text_area("📍 Liste os passeios que quer fazer:", height=120,
+            placeholder="ex: Torre Eiffel, Louvre, Notre Dame, Montmartre, Palais Royal, Sacré-Cœur...")
+        dias_m = st.number_input("📅 Quantos dias:", min_value=1, max_value=21, value=5)
+
+        if st.button("🗺 ORGANIZAR MAPA DE PASSEIOS"):
+            if destino_m.strip():
+                with st.spinner("Organizando passeios por proximidade..."):
+                    prompt = (
+                        f"Organize estes passeios de {destino_m} na ordem mais eficiente para reduzir deslocamentos.\n"
+                        f"Passeios: {pontos_m or 'os principais pontos turísticos'}. Dias disponíveis: {dias_m}.\n\n"
+                        f"FORMATO:\n\n"
+                        f"🗺 MAPA DE PASSEIOS — {destino_m.upper()}\n\n"
+                        f"📍 DISTRIBUIÇÃO POR BAIRRO/REGIÃO:\n"
+                        f"[Agrupe os pontos por proximidade geográfica]\n\n"
+                        f"Para cada DIA, organize assim:\n\n"
+                        f"📅 DIA [N] — BAIRRO/REGIÃO [NOME]\n"
+                        f"• [Ponto 1] — [bairro] — [horário sugerido]\n"
+                        f"  🚶 Até próximo: [X min a pé / Y min de metrô]\n"
+                        f"• [Ponto 2] — [bairro]\n"
+                        f"  🚶 Até próximo: [X min]\n"
+                        f"[continue...]\n\n"
+                        f"🚇 DICAS DE TRANSPORTE ENTRE OS DIAS:\n"
+                        f"[Como ir de um bairro ao outro — metrô, ônibus, táxi]\n\n"
+                        f"⏱️ TEMPO TOTAL DE DESLOCAMENTO ESTIMADO:\n"
+                        f"[Quanto tempo por dia será gasto em transporte]\n\n"
+                        f"💡 POR QUE ESSA ORDEM FAZ SENTIDO:\n"
+                        f"[Explique a lógica geográfica]"
+                    )
+                    res = viagem_ia(prompt)
+                    salvar_roteiro("Mapa de Passeios", destino_m, res)
+                    st.session_state['mapa_temp'] = res
+
+        if st.session_state.get('mapa_temp'):
+            st.markdown(f"<div class='card-green'>{st.session_state['mapa_temp']}</div>", unsafe_allow_html=True)
+            st.download_button("📋 Baixar (.txt)", data=st.session_state['mapa_temp'],
+                file_name="mapa_passeios.txt", mime="text/plain")
+
+    # ========================
+    # MOEDA E CÂMBIO
+    # ========================
+    elif st.session_state.pagina == "Moeda":
+        st.header("💱 Moeda e Câmbio")
+
+        destino_mo = st.text_input("✈️ Destino:", placeholder="ex: Lisboa, Nova York, Tóquio...")
+        orcamento_mo = st.number_input("💰 Orçamento em R$:", min_value=100, max_value=200000, value=5000, step=500)
+
+        if st.button("💱 ANALISAR CÂMBIO E ESTRATÉGIA"):
+            if destino_mo.strip():
+                with st.spinner("Analisando..."):
+                    prompt = (
+                        f"Crie um guia prático de câmbio para {destino_mo} com orçamento de R${orcamento_mo}.\n\n"
+                        f"💱 GUIA DE CÂMBIO — {destino_mo.upper()}\n\n"
+                        f"• Moeda oficial e símbolo\n"
+                        f"• Câmbio estimado atual (R$ para a moeda local)\n"
+                        f"• Quanto R${orcamento_mo} equivale na moeda local\n\n"
+                        f"💳 MELHORES FORMAS DE LEVAR DINHEIRO:\n"
+                        f"• Cartão de crédito internacional (vantagens e taxas)\n"
+                        f"• Cartão débito/pré-pago (Wise, Nomad, C6 — comparativo)\n"
+                        f"• Dinheiro em espécie — quanto levar\n"
+                        f"• O que NUNCA fazer (casas de câmbio no aeroporto, etc)\n\n"
+                        f"💡 ESTRATÉGIA PARA R${orcamento_mo}:\n"
+                        f"• Como dividir entre os meios de pagamento\n"
+                        f"• Onde sacar dinheiro local sem pagar abusivo\n"
+                        f"• Gorjeta — quanto e como"
+                    )
+                    res = viagem_ia(prompt)
+                    salvar_roteiro("Moeda e Câmbio", destino_mo, res)
+                    st.session_state['moeda_temp'] = res
+
+        if st.session_state.get('moeda_temp'):
+            st.markdown(f"<div class='card-yellow'>{st.session_state['moeda_temp']}</div>", unsafe_allow_html=True)
+
+    # ========================
+    # CLIMA
+    # ========================
+    elif st.session_state.pagina == "Clima":
+        st.header("🌤️ Clima no Período da Viagem")
+
+        col1, col2 = st.columns(2)
+        with col1:
+            destino_cl = st.text_input("✈️ Destino:", placeholder="ex: Lisboa, Amsterdã, Bangkok...")
+        with col2:
+            mes_cl = st.selectbox("📅 Mês da viagem:", ["Janeiro","Fevereiro","Março","Abril","Maio","Junho",
+                "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"])
+
+        if st.button("🌤️ VER CLIMA E ROUPAS"):
+            if destino_cl.strip():
+                with st.spinner("Consultando clima..."):
+                    prompt = (
+                        f"Informe o clima de {destino_cl} em {mes_cl} para um turista brasileiro.\n\n"
+                        f"🌤️ CLIMA EM {destino_cl.upper()} — {mes_cl.upper()}\n\n"
+                        f"🌡️ TEMPERATURA:\n"
+                        f"• Média mínima e máxima\n"
+                        f"• Temperatura da água (se litoral)\n"
+                        f"• Sensação térmica (umidade)\n\n"
+                        f"🌧️ CHUVA:\n"
+                        f"• Chance de chuva (%)\n"
+                        f"• Tipo de chuva (pancadas rápidas, chuva contínua, neve)\n"
+                        f"• Impacto nos passeios\n\n"
+                        f"👗 ROUPAS RECOMENDADAS — lista específica:\n"
+                        f"[Liste peças de roupa concretas: ex: calça jeans, 2 camisetas, casaco impermeável...]\n\n"
+                        f"👟 CALÇADOS:\n[Tipo ideal para o clima e terreno]\n\n"
+                        f"🧴 ACESSÓRIOS ESSENCIAIS:\n[protetor solar, guarda-chuva, óculos, etc]\n\n"
+                        f"⚠️ CUIDADOS ESPECIAIS:\n[o que o clima de {mes_cl} exige de atenção em {destino_cl}]"
+                    )
+                    res = viagem_ia(prompt)
+                    salvar_roteiro("Clima", destino_cl, res)
+                    st.session_state['clima_temp'] = res
+
+        if st.session_state.get('clima_temp'):
+            st.markdown(f"<div class='card-purple'>{st.session_state['clima_temp']}</div>", unsafe_allow_html=True)
+            st.download_button("📋 Baixar (.txt)", data=st.session_state['clima_temp'],
+                file_name="clima_viagem.txt", mime="text/plain")
+
+    # ========================
+    # SEGURANÇA E SAÚDE
+    # ========================
+    elif st.session_state.pagina == "Seguranca":
+        st.header("🛡️ Segurança e Saúde")
+
+        destino_sg = st.text_input("✈️ Destino:", placeholder="ex: Lisboa, Cairo, Medellín...")
+
+        if st.button("🛡️ GERAR GUIA DE SEGURANÇA E SAÚDE"):
+            if destino_sg.strip():
+                with st.spinner("Analisando..."):
+                    prompt = (
+                        f"Crie um guia completo de segurança e saúde para turistas brasileiros em {destino_sg}.\n\n"
+                        f"🛡️ SEGURANÇA — {destino_sg.upper()}\n\n"
+                        f"📊 NÍVEL GERAL DE SEGURANÇA:\n[Classificação: seguro / atenção moderada / cuidado redobrado]\n\n"
+                        f"✅ REGIÕES MAIS TRANQUILAS:\n[Bairros e áreas recomendadas para ficar e passear]\n\n"
+                        f"⚠️ ÁREAS PARA EVITAR:\n[Bairros ou regiões com mais ocorrências — sem alarmismo]\n\n"
+                        f"🔒 CUIDADOS COMUNS:\n"
+                        f"• Golpes frequentes aplicados em turistas\n"
+                        f"• Como proteger documentos e pertences\n"
+                        f"• O que fazer em caso de roubo\n"
+                        f"• Número de emergência local\n\n"
+                        f"🏥 SAÚDE — {destino_sg.upper()}\n\n"
+                        f"💉 VACINAS:\n[Exigidas, recomendadas e dispensáveis para brasileiros]\n\n"
+                        f"🏥 HOSPITAIS DE REFERÊNCIA:\n[Nome e localização dos melhores para turistas]\n\n"
+                        f"📋 SEGURO VIAGEM:\n[Obrigatório? Qual cobrir? Preço médio? Melhores empresas?]\n\n"
+                        f"💊 MEDICAMENTOS BÁSICOS A LEVAR:\n[Lista de itens para farmácia de viagem]"
+                    )
+                    res = viagem_ia(prompt)
+                    salvar_roteiro("Segurança e Saúde", destino_sg, res)
+                    st.session_state['seg_temp'] = res
+
+        if st.session_state.get('seg_temp'):
+            st.markdown(f"<div class='card-orange'>{st.session_state['seg_temp']}</div>", unsafe_allow_html=True)
+            col_dl, col_sv = st.columns(2)
+            with col_dl:
+                st.download_button("📋 Baixar (.txt)", data=st.session_state['seg_temp'],
+                    file_name="seguranca_saude.txt", mime="text/plain", use_container_width=True)
+            with col_sv:
+                if st.button("❤️ Salvar", key="sv_seg", use_container_width=True):
+                    st.session_state.viagens_salvas.append({'tipo':'Segurança e Saúde',
+                        'destino': destino_sg if 'destino_sg' in dir() else '',
+                        'conteudo': st.session_state['seg_temp'],
+                        'data': datetime.now().strftime('%d/%m %H:%M')})
+                    st.success("❤️ Salvo!")
+
+    # ========================
+    # HISTÓRIA DO DESTINO
+    # ========================
+    elif st.session_state.pagina == "Historia":
+        st.header("🏛️ Conheça o Destino")
+        st.markdown("Descubra a história, cultura e curiosidades antes de visitar.")
+
+        destino_h = st.text_input("✈️ Destino:", placeholder="ex: Lisboa, Roma, Machu Picchu, Kyoto...")
+
+        tema_h = st.multiselect("📚 O que você quer saber:", [
+            "📜 Como a cidade surgiu",
+            "👑 Personagens históricos importantes",
+            "⚔️ Principais acontecimentos históricos",
+            "🏰 Monumentos que marcaram essa história",
+            "🎬 Filmes famosos gravados no local",
+            "📚 Livros famosos ambientados na cidade",
+            "🌟 Curiosidades que quase ninguém conhece",
+            "🏆 Recordes ou títulos (Patrimônio Mundial, etc)",
+            "💬 Uma lenda ou história curiosa da região",
+            "📱 Aplicativos indispensáveis para esse destino",
+        ], default=["📜 Como a cidade surgiu","🌟 Curiosidades que quase ninguém conhece","🏰 Monumentos que marcaram essa história"])
+
+        if st.button("🏛️ CONHECER ESTE DESTINO"):
+            if destino_h.strip():
+                with st.spinner(f"Mergulhando na história de {destino_h}..."):
+                    temas_txt = "\n".join(f"• {t}" for t in tema_h) if tema_h else "• História geral e curiosidades"
+                    prompt = (
+                        f"Crie um guia histórico e cultural envolvente sobre {destino_h}.\n"
+                        f"Cubra os seguintes temas:\n{temas_txt}\n\n"
+                        f"FORMATO:\n\n"
+                        f"🏛️ CONHEÇA {destino_h.upper()}\n\n"
+                        f"[Parágrafo de introdução vibrante — 3-4 linhas que faça a pessoa querer visitar]\n\n"
+                        f"[Para cada tema selecionado, use o emoji e o título como cabeçalho, depois o conteúdo detalhado]\n\n"
+                        f"💡 ANTES DE VISITAR, SAIBA:\n"
+                        f"[3 fatos que vão transformar a experiência de visitar {destino_h}]"
+                    )
+                    res = viagem_ia(prompt)
+                    salvar_roteiro("História do Destino", destino_h, res)
+                    st.session_state['historia_temp'] = res
+
+        if st.session_state.get('historia_temp'):
+            st.markdown(f"<div class='card-purple'>{st.session_state['historia_temp']}</div>", unsafe_allow_html=True)
+            col_dl, col_sv = st.columns(2)
+            with col_dl:
+                st.download_button("📋 Baixar (.txt)", data=st.session_state['historia_temp'],
+                    file_name=f"historia_{destino_h.replace(' ','_') if 'destino_h' in dir() else 'destino'}.txt",
+                    mime="text/plain", use_container_width=True)
+            with col_sv:
+                if st.button("❤️ Salvar", key="sv_historia", use_container_width=True):
+                    st.session_state.viagens_salvas.append({'tipo':'História do Destino',
+                        'destino': destino_h if 'destino_h' in dir() else '',
+                        'conteudo': st.session_state['historia_temp'],
+                        'data': datetime.now().strftime('%d/%m %H:%M')})
+                    st.success("❤️ Salvo!")
+
+    # ========================
+    # GERAR PDF DA VIAGEM
+    # ========================
+    elif st.session_state.pagina == "PDF":
+        st.header("📄 Gerar Resumo da Viagem para Levar")
+        st.markdown("Gere um resumo compacto e organizado do seu roteiro — para imprimir ou salvar no celular.")
+
+        if not st.session_state.historico_roteiros:
+            st.info("Gere pelo menos um roteiro primeiro, depois volte aqui para criar o resumo.")
+        else:
+            roteiros_disponiveis = [f"{r['tipo']} — {r['destino']} ({r['data']})" for r in st.session_state.historico_roteiros[-10:]]
+            roteiro_sel = st.selectbox("Escolha o roteiro:", roteiros_disponiveis)
+            idx_sel = roteiros_disponiveis.index(roteiro_sel)
+            roteiro_escolhido = st.session_state.historico_roteiros[-(len(roteiros_disponiveis) - idx_sel)]
+
+            formato_pdf = st.radio("Formato:", ["Resumo compacto (1 página)","Versão completa para imprimir","Versão para celular (compacta e visual)"])
+
+            if st.button("📄 GERAR RESUMO"):
+                with st.spinner("Gerando versão para levar..."):
+                    prompt = (
+                        f"Reformate este roteiro de viagem no formato: {formato_pdf}.\n"
+                        f"Destino: {roteiro_escolhido['destino']}.\n"
+                        f"Roteiro original:\n{roteiro_escolhido['conteudo'][:3000]}\n\n"
+                        f"INSTRUÇÕES:\n"
+                        f"- Formato compacto: destaque APENAS o essencial (endereços, horários, preços, telefones)\n"
+                        f"- Use emojis como marcadores visuais para facilitar a leitura rápida\n"
+                        f"- Inclua uma seção 'EMERGÊNCIA' com números úteis e endereço do hotel\n"
+                        f"- Organize por dia de forma clara\n"
+                        f"- Adicione uma checklist rápida de itens para não esquecer no dia"
+                    )
+                    res = viagem_ia(prompt)
+                    salvar_roteiro("Resumo PDF", roteiro_escolhido['destino'], res)
+                    st.session_state['pdf_temp'] = res
+
+        if st.session_state.get('pdf_temp'):
+            st.markdown(f"<div class='card'>{st.session_state['pdf_temp']}</div>", unsafe_allow_html=True)
+            col_dl, col_sv = st.columns(2)
+            with col_dl:
+                st.download_button("📄 Baixar resumo (.txt)", data=st.session_state['pdf_temp'],
+                    file_name="resumo_viagem.txt", mime="text/plain", use_container_width=True)
+            with col_sv:
+                if st.button("❤️ Salvar", key="sv_pdf", use_container_width=True):
+                    st.session_state.viagens_salvas.append({'tipo':'Resumo para Viagem',
+                        'destino': roteiro_escolhido['destino'] if 'roteiro_escolhido' in dir() else '',
+                        'conteudo': st.session_state['pdf_temp'],
+                        'data': datetime.now().strftime('%d/%m %H:%M')})
+                    st.success("❤️ Salvo!")
+
+    # ========================
+    # ECONOMIZAR MAIS
+    # ========================
+    elif st.session_state.pagina == "Economizar":
+        st.header("💸 Economizar Mais")
+        st.markdown("Refaz o roteiro reduzindo custos sem abrir mão da experiência.")
+
+        col1, col2 = st.columns(2)
+        with col1:
+            destino_ec = st.text_input("✈️ Destino:", value=st.session_state.get('roteiro_destino',''), placeholder="ex: Lisboa, Paris...")
+            dias_ec = st.number_input("📅 Dias:", min_value=2, max_value=21, value=st.session_state.get('roteiro_dias', 7))
+            orcamento_ec = st.number_input("💰 Orçamento disponível (R$):", min_value=500, max_value=100000, value=st.session_state.get('roteiro_orcamento', 3000), step=500)
+        with col2:
+            pessoas_ec = st.selectbox("👥 Pessoas:", ["1 pessoa","2 pessoas","3-4 pessoas","5+ pessoas"],
+                index=["1 pessoa","2 pessoas","3-4 pessoas","5+ pessoas"].index(st.session_state.get('roteiro_pessoas','1 pessoa')) if st.session_state.get('roteiro_pessoas') in ["1 pessoa","2 pessoas","3-4 pessoas","5+ pessoas"] else 0)
+            epoca_ec = st.text_input("📅 Período:", value=st.session_state.get('roteiro_epoca',''), placeholder="ex: julho...")
+            prioridade_ec = st.multiselect("🎯 O que NÃO abrir mão:", ["Hospedagem boa","Restaurantes","Passeios pagos","Transporte confortável"],
+                default=["Passeios pagos"])
+
+        if st.button("💸 GERAR ROTEIRO ECONÔMICO"):
+            if destino_ec.strip():
+                with st.spinner(f"Otimizando custos para {destino_ec}..."):
+                    prompt = (
+                        f"Crie um roteiro ECONÔMICO e otimizado para {destino_ec}.\n"
+                        f"Dias: {dias_ec}. Orçamento: R${orcamento_ec}. Pessoas: {pessoas_ec}. Época: {epoca_ec or 'qualquer'}.\n"
+                        f"O que não pode faltar: {', '.join(prioridade_ec) if prioridade_ec else 'flexível'}.\n\n"
+                        f"FOCO: reduzir custos ao máximo sem perder qualidade de experiência.\n\n"
+                        f"FORMATO:\n\n"
+                        f"💸 ROTEIRO ECONÔMICO — {destino_ec.upper()}\n\n"
+                        f"💡 ESTRATÉGIA DE ECONOMIA:\n"
+                        f"[As 5 principais decisões que vão economizar mais dinheiro nessa viagem]\n\n"
+                        f"🆓 ATRAÇÕES GRATUITAS OU QUASE:\n"
+                        f"[Lista de museus gratuitos, parques, mirantes, eventos sem custo]\n\n"
+                        f"Para cada dia:\n\n"
+                        f"📅 DIA [N]\n"
+                        f"• Manhã: [atividade gratuita ou barata] — R$[X]\n"
+                        f"• Almoço: [opção econômica com nome real] — R$[X]/pessoa\n"
+                        f"• Tarde: [atividade] — R$[X]\n"
+                        f"• Jantar: [opção econômica] — R$[X]/pessoa\n"
+                        f"💰 Total do dia: R$[X]/pessoa\n\n"
+                        f"🏨 HOSPEDAGEM ECONÔMICA:\n"
+                        f"[Melhores opções custo-benefício: hostels bons, apartamentos Airbnb por localização]\n\n"
+                        f"🚇 TRANSPORTE ECONÔMICO:\n"
+                        f"[Passes de transporte, quando vale a pena, como evitar táxi]\n\n"
+                        f"📊 ORÇAMENTO FINAL ECONOMIZADO:\n"
+                        f"Total estimado: R$[X] p/pessoa\n"
+                        f"Economia vs roteiro padrão: aprox. R$[X]\n"
+                        f"[Compare com o orçamento de R${orcamento_ec} e diga se é suficiente]\n\n"
+                        f"⚠️ ONDE NÃO ECONOMIZAR:\n"
+                        f"[Itens que vale gastar um pouco mais — seguro, transporte no aeroporto, etc]"
+                    )
+                    res = viagem_ia(prompt)
+                    salvar_roteiro("Roteiro Econômico", destino_ec, res)
+                    st.session_state['econom_temp'] = res
+
+        if st.session_state.get('econom_temp'):
+            st.markdown(f"<div class='card-green'>{st.session_state['econom_temp']}</div>", unsafe_allow_html=True)
+            col_dl, col_sv = st.columns(2)
+            with col_dl:
+                st.download_button("📋 Baixar (.txt)", data=st.session_state['econom_temp'],
+                    file_name="roteiro_economico.txt", mime="text/plain", use_container_width=True)
+            with col_sv:
+                if st.button("❤️ Salvar", key="sv_econom", use_container_width=True):
+                    st.session_state.viagens_salvas.append({'tipo':'Roteiro Econômico',
+                        'destino': destino_ec if 'destino_ec' in dir() else '',
+                        'conteudo': st.session_state['econom_temp'],
+                        'data': datetime.now().strftime('%d/%m %H:%M')})
+                    st.success("❤️ Salvo!")
+
+    # ========================
+    # PALAVRAS ARMADILHA
+    # ========================
+    elif st.session_state.pagina == "Armadilha":
+        st.header("🚫 Palavras Armadilha")
+        st.markdown("Palavras ou expressões completamente normais em português — mas ofensivas, obscenas ou constrangedoras no país de destino. Saiba antes de viajar.")
+
+        col1, col2 = st.columns(2)
+        with col1:
+            pais_arm = st.text_input("🌍 País de destino:", placeholder="ex: Portugal, Espanha, EUA, Japão, Argentina...")
+        with col2:
+            incluir_gestos = st.checkbox("Incluir gestos e linguagem corporal", value=True)
+            incluir_nomes = st.checkbox("Incluir nomes próprios e marcas que soam mal", value=True)
+
+        if st.button("🚫 DESCOBRIR AS ARMADILHAS"):
+            if pais_arm.strip():
+                with st.spinner(f"Pesquisando micos em {pais_arm}..."):
+                    prompt = (
+                        f"Crie um guia completo de palavras, expressões e comportamentos que são normais para "
+                        f"brasileiros mas que podem ser ofensivos, obscenos ou constrangedores em {pais_arm}.\n\n"
+                        f"SEJA ESPECÍFICO E HONESTO — este guia existe justamente para evitar micos reais.\n\n"
+                        f"FORMATO:\n\n"
+                        f"🚫 PALAVRAS ARMADILHA — BRASIL → {pais_arm.upper()}\n\n"
+                        f"📖 INTRODUÇÃO:\n"
+                        f"[1 parágrafo explicando por que isso acontece — diferenças históricas, evolução dos idiomas, colonização, etc.]\n\n"
+                        f"⚠️ PALAVRAS DO PORTUGUÊS BRASILEIRO QUE CAUSAM PROBLEMA:\n\n"
+                        f"Para cada palavra/expressão use este formato:\n"
+                        f"🔴 **[PALAVRA EM PORTUGUÊS]**\n"
+                        f"• O que significa para nós: [definição normal/inocente em pt-BR]\n"
+                        f"• O que significa lá: [o que aquela palavra significa ou soa em {pais_arm}]\n"
+                        f"• Nível de constrangimento: [leve 😅 / moderado 😬 / grave 😱]\n"
+                        f"• Como evitar: [palavra substituta ou jeito certo de falar]\n\n"
+                        f"[Inclua pelo menos 12-15 exemplos reais e conhecidos]\n\n"
+                    )
+                    if incluir_gestos:
+                        prompt += (
+                            f"👋 GESTOS E LINGUAGEM CORPORAL QUE ENGANAM:\n\n"
+                            f"[Gestos comuns no Brasil que têm significado diferente ou ofensivo em {pais_arm}. "
+                            f"Ex: jinha de ok, polegar, acenar, etc. Mesmo formato: gesto, o que significa aqui, o que significa lá, nível de problema.]\n\n"
+                        )
+                    if incluir_nomes:
+                        prompt += (
+                            f"😬 NOMES PRÓPRIOS E MARCAS QUE SOAM MAL:\n\n"
+                            f"[Nomes comuns no Brasil — de pessoas, produtos ou lugares — que soam como algo ofensivo "
+                            f"ou engraçado em {pais_arm}. Explique o porquê.]\n\n"
+                        )
+                    prompt += (
+                        f"🔁 O INVERSO TAMBÉM VALE — PALAVRAS DELES QUE NOS SURPREENDEM:\n\n"
+                        f"[Palavras comuns em {pais_arm} que soam ofensivas, engraçadas ou inadequadas para brasileiros. "
+                        f"Para não se ofender à toa quando ouvir.]\n\n"
+                        f"💡 DICA FINAL:\n"
+                        f"[Conselho prático sobre como lidar quando escapar uma palavra errada — "
+                        f"como se desculpar de forma adequada na cultura de {pais_arm}]"
+                    )
+                    res = viagem_ia(prompt,
+                        "Seja completo e honesto. Este guia existe para ajudar brasileiros a evitar situações "
+                        "constrangedoras reais. Inclua exemplos verídicos e conhecidos. Não omita por pudor — "
+                        "o objetivo é exatamente informar sobre o que é delicado.")
+                    salvar_roteiro("Palavras Armadilha", pais_arm, res)
+                    st.session_state['armadilha_temp'] = res
+            else:
+                st.warning("Informe o país de destino.")
+
+        if st.session_state.get('armadilha_temp'):
+            st.markdown(f"<div class='card-orange'>{st.session_state['armadilha_temp']}</div>",
+                unsafe_allow_html=True)
+            col_dl, col_sv = st.columns(2)
+            with col_dl:
+                st.download_button("📋 Baixar (.txt)",
+                    data=st.session_state['armadilha_temp'],
+                    file_name=f"armadilhas_{pais_arm.replace(' ','_') if 'pais_arm' in dir() else 'destino'}.txt",
+                    mime="text/plain", use_container_width=True)
+            with col_sv:
+                if st.button("❤️ Salvar", key="sv_armadilha", use_container_width=True):
+                    st.session_state.viagens_salvas.append({
+                        'tipo': 'Palavras Armadilha',
+                        'destino': pais_arm if 'pais_arm' in dir() else '',
+                        'conteudo': st.session_state['armadilha_temp'],
+                        'data': datetime.now().strftime('%d/%m %H:%M'),
+                    })
+                    st.success("❤️ Salvo!")
+
+            st.markdown("""
+            <div style='background:#FFF7ED;border:1px solid #FDBA74;border-radius:10px;
+            padding:12px 16px;font-size:0.82em;color:#92400E;margin-top:8px;'>
+            💡 <strong>Dica:</strong> compartilhe esse guia com todo o grupo antes de viajar.
+            Um mico evitado vale mais que qualquer roteiro.
+            </div>
+            """, unsafe_allow_html=True)
+
+    # ========================
+    # COMO SÃO AS PESSOAS
+    # ========================
+    elif st.session_state.pagina == "Pessoas":
+        st.header("🤝 Como São as Pessoas")
+        st.markdown("Guia de relacionamento social — como cumprimentar, o que ofende, o que agrada, como funciona a dinâmica com estrangeiros.")
+
+        col1, col2 = st.columns(2)
+        with col1:
+            pais_pe = st.text_input("🌍 País de destino:", placeholder="ex: Japão, Portugal, Alemanha, Marrocos...")
+            contexto_pe = st.multiselect("Situações que você vai viver:", [
+                "Ir à casa de alguém","Jantar com locais","Ambiente de trabalho/negócios",
+                "Bares e baladas","Fazer amizades na rua","Compras e mercado",
+                "Transporte público","Visitar família local","Encontros românticos",
+            ], default=["Ir à casa de alguém","Jantar com locais","Fazer amizades na rua"])
+        with col2:
+            perfil_pe = st.selectbox("Seu perfil de viajante:", [
+                "Turista passando alguns dias","Vai visitar amigos ou conhecidos",
+                "Viagem de negócios","Vai morar ou ficar por meses",
+                "Intercâmbio ou estudo","Encontro romântico / namoro à distância",
+            ])
+
+        if st.button("🤝 GERAR GUIA DE RELACIONAMENTO"):
+            if pais_pe.strip():
+                with st.spinner(f"Preparando guia de relacionamento para {pais_pe}..."):
+                    contextos_txt = ", ".join(contexto_pe) if contexto_pe else "situações gerais"
+                    prompt = (
+                        f"Crie um guia completo e honesto sobre como são as pessoas de {pais_pe} "
+                        f"e como um brasileiro deve se relacionar com elas.\n"
+                        f"Perfil do viajante: {perfil_pe}. Situações: {contextos_txt}.\n\n"
+                        f"FORMATO:\n\n"
+                        f"🤝 COMO SÃO AS PESSOAS DE {pais_pe.upper()}\n\n"
+                        f"🧠 PERSONALIDADE GERAL:\n"
+                        f"[Como as pessoas desse país são em geral — reservadas ou abertas, formais ou informais, "
+                        f"desconfiadas ou receptivas com estrangeiros, diretas ou indiretas. "
+                        f"Compare com o jeito brasileiro para facilitar o entendimento.]\n\n"
+                        f"👋 CUMPRIMENTOS — COMO SE FAZ:\n"
+                        f"• Entre homens: [aperto de mão, abraço, beijo, reverência, etc — e quando cada um é adequado]\n"
+                        f"• Entre mulheres: [idem]\n"
+                        f"• Homem cumprimentando mulher: [o que fazer e o que NUNCA fazer]\n"
+                        f"• Em ambiente formal vs informal: [diferença]\n"
+                        f"• Com idosos: [como tratar com respeito]\n"
+                        f"• Com crianças: [pode tocar, fazer carinha, etc?]\n\n"
+                        f"🏠 IR À CASA DE ALGUÉM — REGRAS DE OURO:\n"
+                        f"• Deve-se levar algo? O quê? [seja específico — vinho, doce, o quê exatamente]\n"
+                        f"• Flores: pode? Qual tipo? Qual cor? [algumas cores são luto em certos países]\n"
+                        f"• Pontualidade: chegar no horário exato, adiantado ou atrasado?\n"
+                        f"• Ao entrar: tira o sapato? Espera ser convidado a sentar?\n"
+                        f"• À mesa: espera todos servirem? Elogia a comida? Recusa algo se não gostar?\n"
+                        f"• Quanto tempo ficar após o jantar? Quando é hora de ir embora?\n"
+                        f"• O que mandar depois: mensagem de agradecimento? É esperado?\n\n"
+                        f"🎁 PRESENTES — O QUE OFENDE SEM QUERER:\n"
+                        f"[Lista do que NUNCA dar de presente e por quê — flores de determinada cor, faca, relógio, "
+                        f"número de itens, etc. Seja específico para {pais_pe}.]\n\n"
+                        f"💬 CONVERSAS — O QUE FALAR E O QUE EVITAR:\n"
+                        f"• Assuntos que quebram o gelo facilmente com locais de {pais_pe}\n"
+                        f"• Assuntos TABU que devem ser evitados completamente\n"
+                        f"• Perguntas que parecem inocentes mas ofendem\n"
+                        f"• Como os locais reagem quando um brasileiro fala muito ou faz muitas perguntas pessoais\n\n"
+                        f"😊 O QUE OS LOCAIS DE {pais_pe.upper()} ADORAM NOS BRASILEIROS:\n"
+                        f"[Características do jeito brasileiro que são bem recebidas — use isso a seu favor]\n\n"
+                        f"😬 O QUE OS LOCAIS NÃO GOSTAM NO JEITO BRASILEIRO:\n"
+                        f"[Comportamentos comuns para nós que incomodam ou causam estranheza lá — sem julgamento, só informação]\n\n"
+                        f"🍽️ À MESA — ETIQUETA LOCAL:\n"
+                        f"• Quem paga quando saem juntos?\n"
+                        f"• Gorjeta: obrigatória, opcional ou ofensiva?\n"
+                        f"• Falar com a boca cheia, cotovelo na mesa — o que é tolerado?\n"
+                        f"• Tirar foto da comida: aceitável ou estranho?\n\n"
+                        f"💑 RELACIONAMENTO ENTRE HOMENS E MULHERES:\n"
+                        f"[Como é a dinâmica social — olhar nos olhos, tocar no braço, piropear, "
+                        f"o que é flerte e o que é assédio na cultura local]\n\n"
+                        f"🕐 PONTUALIDADE E TEMPO:\n"
+                        f"[A cultura é pontual ou relaxada com horários? O que é insulto e o que é normal em questão de tempo?]\n\n"
+                        f"📱 COMUNICAÇÃO DIGITAL:\n"
+                        f"[WhatsApp é usado? Como respondem mensagens — rápido, devagar? "
+                        f"Ligar sem avisar é ok? Rede social favorita para se conectar com locais?]\n\n"
+                        f"🌟 DICA FINAL DO VIAJANTE EXPERIENTE:\n"
+                        f"[1 comportamento que, se o brasileiro adotar, vai criar uma impressão muito positiva "
+                        f"nos locais de {pais_pe} — algo específico e prático]"
+                    )
+                    res = viagem_ia(prompt,
+                        "Seja honesto, específico e culturalmente preciso. Evite generalizações vagas. "
+                        "O objetivo é preparar um brasileiro para interações sociais reais — não um guia turístico genérico.")
+                    salvar_roteiro("Como São as Pessoas", pais_pe, res)
+                    st.session_state['pessoas_temp'] = res
+            else:
+                st.warning("Informe o país de destino.")
+
+        if st.session_state.get('pessoas_temp'):
+            st.markdown(f"<div class='card'>{st.session_state['pessoas_temp']}</div>",
+                unsafe_allow_html=True)
+            col_dl, col_sv = st.columns(2)
+            with col_dl:
+                st.download_button("📋 Baixar (.txt)",
+                    data=st.session_state['pessoas_temp'],
+                    file_name=f"pessoas_{pais_pe.replace(' ','_') if 'pais_pe' in dir() else 'destino'}.txt",
+                    mime="text/plain", use_container_width=True)
+            with col_sv:
+                if st.button("❤️ Salvar", key="sv_pessoas", use_container_width=True):
+                    st.session_state.viagens_salvas.append({
+                        'tipo': 'Como São as Pessoas',
+                        'destino': pais_pe if 'pais_pe' in dir() else '',
+                        'conteudo': st.session_state['pessoas_temp'],
+                        'data': datetime.now().strftime('%d/%m %H:%M'),
+                    })
+                    st.success("❤️ Salvo!")
 
 # --- RODAPÉ ---
 st.markdown(
