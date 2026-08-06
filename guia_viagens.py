@@ -416,16 +416,34 @@ elif st.session_state.etapa == "App":
         st.markdown("<div class='card'>💡 <em>'O mundo é um livro e quem não viaja lê apenas uma página.'</em> — Santo Agostinho</div>", unsafe_allow_html=True)
 
         st.markdown("### 🗺️ O que cada aba faz")
-        guia = {
-            "🗺️ Roteiro Completo":      "Roteiro dia a dia completo para qualquer destino do mundo — com horários, custos e dicas",
+        st.markdown("**Linha 1 — Planejamento principal:**")
+        guia1 = {
+            "🗺️ Roteiro Completo":       "Roteiro dia a dia completo para qualquer destino — horários, custos, restaurantes com nota, tempo de deslocamento e análise de orçamento",
             "🇧🇷 Fim de Semana no Brasil": "Destinos incríveis perto de você para viajar sem gastar muito",
-            "💰 Estimativa de Custos":   "Planejamento financeiro da viagem — passagem, hotel, alimentação, passeios",
-            "🗣️ Frases Essenciais":      "As frases mais importantes no idioma local para se virar em qualquer situação",
-            "🧳 Checklist de Viagem":    "Lista completa do que levar, documentos, apps e o que não esquecer",
-            "👥 Viagem em Grupo":        "Plano completo para viagem em grupo — divisão de custos e o que combinar antes",
-            "❤️ Viagens Salvas":         "Seus roteiros favoritos organizados e prontos para consultar",
+            "💰 Estimativa de Custos":    "Planejamento financeiro da viagem — passagem, hotel, alimentação, passeios",
+            "🗣️ Frases Essenciais":       "As frases mais importantes no idioma local — com pronúncia e dica cultural",
+            "🧳 Checklist de Viagem":     "Lista completa do que levar de acordo com o destino e a estação do ano",
+            "👥 Viagem em Grupo":         "Plano completo para viagem em grupo — divisão de custos e o que combinar antes",
+            "❤️ Viagens Salvas":          "Seus roteiros favoritos organizados e prontos para consultar",
         }
-        for aba, desc in guia.items():
+        for aba, desc in guia1.items():
+            st.markdown(f"**{aba}** — {desc}")
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("**Linha 2 — Módulos avançados:**")
+        guia2 = {
+            "🌍 Guia do Destino":         "Tudo em um só lugar — clima, segurança, moeda, transporte, saúde, costumes, pratos típicos, festivais e apps",
+            "🗺 Mapa dos Passeios":        "Organiza os pontos turísticos por bairro e proximidade com tempo de deslocamento entre cada um",
+            "💱 Moeda e Câmbio":          "Câmbio estimado, quanto seu orçamento vale na moeda local e estratégia de pagamento (Wise, C6, espécie)",
+            "🌤️ Clima no Período":         "Temperatura, chance de chuva e lista específica de roupas para aquele mês naquele destino",
+            "🛡️ Segurança e Saúde":       "Nível de segurança, regiões tranquilas, vacinas, hospitais de referência e seguro viagem",
+            "🏛️ Conheça o Destino":       "História, monumentos, filmes gravados, curiosidades, lendas e apps indispensáveis",
+            "📄 PDF da Viagem":           "Reformata qualquer roteiro em versão compacta para imprimir ou salvar no celular",
+            "💸 Economizar Mais":         "Refaz o roteiro inteiro focando em reduzir custos — atrações gratuitas, hospedagem custo-benefício e análise de orçamento",
+            "🚫 Palavras Armadilha":      "Palavras normais em português que são ofensivas ou obscenas no destino — e o inverso também",
+            "🤝 Como São as Pessoas":     "Cumprimentos, presentes que ofendem, o que falar e evitar, etiqueta à mesa, dinâmica social e o que os locais adoram (e não gostam) no jeito brasileiro",
+        }
+        for aba, desc in guia2.items():
             st.markdown(f"**{aba}** — {desc}")
 
         if st.session_state.historico_roteiros:
