@@ -159,6 +159,55 @@ for k, v in defaults.items():
     if k not in st.session_state:
         st.session_state[k] = v
 
+# --- NORMALIZA TABELAS DE FRASES (converte tabs em pipes, garante separador) ---
+def normalizar_tabelas_frases(texto: str) -> str:
+    """
+    Garante que todas as tabelas de frases usem formato pipe markdown.
+    Converte linhas com tabs em linhas com pipes.
+    Injeta linha separadora |---|---| quando ausente (só após cabeçalho).
+    """
+    linhas = texto.split('\n')
+    resultado = []
+    aguardando_separador = False
+    i = 0
+    while i < len(linhas):
+        linha = linhas[i]
+
+        # Linha com tabs (formato errado): converte para pipes
+        if '\t' in linha and not linha.strip().startswith('|'):
+            partes = [p.strip() for p in linha.split('\t') if p.strip()]
+            if len(partes) >= 2:
+                linha = '| ' + ' | '.join(partes) + ' |'
+
+        eh_linha_tabela = linha.strip().startswith('|') and linha.strip().endswith('|')
+        eh_separador = '---' in linha and linha.strip().startswith('|')
+
+        if eh_linha_tabela and not eh_separador:
+            if aguardando_separador:
+                # Esta é uma linha de dados após o cabeçalho — ok, já inserimos o separador
+                resultado.append(linha)
+            else:
+                # Este é o cabeçalho — verifica se próxima linha tem separador
+                resultado.append(linha)
+                prox = linhas[i+1].strip() if i+1 < len(linhas) else ''
+                # Converte próxima linha se for tab
+                if '\t' in prox:
+                    partes_prox = [p.strip() for p in prox.split('\t') if p.strip()]
+                    prox = '| ' + ' | '.join(partes_prox) + ' |' if len(partes_prox) >= 2 else prox
+                if not (prox.startswith('|---') or prox.startswith('| ---') or '---' in prox):
+                    colunas = len([c for c in linha.split('|') if c.strip()])
+                    resultado.append('|' + '|'.join(['---'] * colunas) + '|')
+                aguardando_separador = True
+        elif eh_separador:
+            resultado.append(linha)
+            aguardando_separador = True
+        else:
+            aguardando_separador = False
+            resultado.append(linha)
+        i += 1
+
+    return '\n'.join(resultado)
+
 # --- MOTOR DE IA ---
 def viagem_ia(prompt: str, system_extra: str = "") -> str:
     try:
@@ -782,16 +831,22 @@ elif st.session_state.etapa == "App":
                         f"Crie um guia de frases essenciais para {pais_f}.\n"
                         f"Situações: {contexts}. Nível: {nivel_f}.\n"
                         f"{'Inclua pronúncia fonética entre colchetes.' if fonetica else ''}\n\n"
-                        f"FORMATO EXATO — siga rigorosamente, sem linhas extras:\n\n"
-                        f"[EMOJI] [NOME DA SITUAÇÃO]\n"
+                        f"REGRAS DE FORMATAÇÃO — siga rigorosamente:\n"
+                        f"1. Use SEMPRE tabela markdown com pipes | para todas as seções\n"
+                        f"2. NUNCA use tabulações (tab) para separar colunas\n"
+                        f"3. O título da situação vai na linha imediatamente ANTES da tabela, sem linhas em branco entre eles\n"
+                        f"4. Separe as seções com apenas UMA linha em branco\n\n"
+                        f"FORMATO EXATO (copie esta estrutura):\n\n"
+                        f"🍴 Nome da Situação\n"
+                        f"| Português | {pais_f} | {'Pronúncia' if fonetica else ''} |\n"
+                        f"|-----------|---------|{'---------' if fonetica else ''}|\n"
+                        f"| frase em português | tradução | {'[pronúncia]' if fonetica else ''} |\n\n"
+                        f"🚌 Próxima Situação\n"
                         f"| Português | {pais_f} | {'Pronúncia' if fonetica else ''} |\n"
                         f"|-----------|---------|{'---------' if fonetica else ''}|\n"
                         f"| frase | tradução | {'[pronúncia]' if fonetica else ''} |\n\n"
-                        f"REGRA CRÍTICA: o título da situação (ex: 🍴 Restaurante e comida) deve ser "
-                        f"imediatamente seguido pela tabela, SEM linhas em branco entre eles. "
-                        f"Separe as SEÇÕES entre si com apenas UMA linha em branco.\n\n"
-                        f"Mínimo 6 frases por situação. Repita para todas as situações: {contexts}\n\n"
-                        f"🆘 FRASES DE EMERGÊNCIA (memorize antes de viajar):\n"
+                        f"Mínimo 6 frases por situação. Repita para todas: {contexts}\n\n"
+                        f"🆘 FRASES DE EMERGÊNCIA\n"
                         f"| Português | {pais_f} | {'Pronúncia' if fonetica else ''} |\n"
                         f"|-----------|---------|{'---------' if fonetica else ''}|\n"
                         f"[10 frases de emergência]\n\n"
@@ -801,13 +856,21 @@ elif st.session_state.etapa == "App":
                         f"[Como os locais reagem quando estrangeiros tentam falar o idioma]"
                     )
                     res = viagem_ia(prompt)
+                    # Normaliza tabelas: converte tabs em pipes e garante cabeçalho separador
+                    res = normalizar_tabelas_frases(res)
                     salvar_roteiro("Frases Essenciais", pais_f, res)
                     st.session_state['frases_temp'] = res
-                    st.markdown(f"<div class='card-purple'>{res}</div>", unsafe_allow_html=True)
             else:
                 st.warning("Informe o país ou idioma.")
 
         if st.session_state.get('frases_temp'):
+            # Usa st.markdown nativo para renderizar tabelas markdown corretamente
+            st.markdown("""
+            <div style='background:linear-gradient(135deg,#F5F3FF,#EDE9FE);
+            border:1px solid #C4B5FD;border-radius:16px;padding:20px 24px;margin-bottom:15px;'>
+            </div>
+            """, unsafe_allow_html=True)
+            st.markdown(st.session_state['frases_temp'])
             col_dl, col_sv = st.columns(2)
             with col_dl:
                 st.download_button("📋 Baixar frases (.txt)", data=st.session_state['frases_temp'],
